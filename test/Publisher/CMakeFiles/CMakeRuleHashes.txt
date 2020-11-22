@@ -1,0 +1,4 @@
+# Hashes of file build rules.
+7de811eebf6d9ff10582ca13e3877866 MessengerC.h
+77e0a60e849f62c0c7e970c718830af0 MessengerTypeSupportC.h
+97bf7cab95f434e389d7ab6c1aca252c MessengerTypeSupportImpl.h

@@ -1,0 +1,3 @@
+/home/mypc/opendds-ckan/test/Publisher/CMakeFiles/rebuild_cache.dir
+/home/mypc/opendds-ckan/test/Publisher/CMakeFiles/edit_cache.dir
+/home/mypc/opendds-ckan/test/Publisher/CMakeFiles/publisher.dir
