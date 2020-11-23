@@ -23,3 +23,12 @@ OPENDDS_TARGET_SOURCES(subscriber
 	Messenger.idl
 	OPENDDS_IDL_OPTIONS -Grapidjson)
 target_link_libraries(subscriber ${opendds_libs})
+
+# Publisher
+add_executable(publisher
+  Publisher.cpp
+)
+OPENDDS_TARGET_SOURCES(publisher
+  Messenger.idl
+  OPENDDS_IDL_OPTIONS -Grapidjson)
+target_link_libraries(publisher ${opendds_libs})

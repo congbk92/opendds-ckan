@@ -31,12 +31,22 @@ ACE_TMAIN(int argc, ACE_TCHAR *argv[])
     DDS::DomainParticipantFactory_var dpf =
       TheParticipantFactoryWithArgs(argc, argv);
 
+    DDS::DomainParticipantQos part_qos;
+    dpf->get_default_participant_qos(part_qos);
+    DDS::PropertySeq& props = part_qos.property.value;
+ 
+    const DDS::Property_t prop = { "OpenDDS.RtpsRelay.Groups", "Messenger", true /* propagate */ };
+    const unsigned int len = props.length();
+    props.length(len + 1);
+    props[len] = prop;
+
+
     // Create DomainParticipant
     DDS::DomainParticipant_var participant =
-      dpf->create_participant(42,
-                              PARTICIPANT_QOS_DEFAULT,
+      dpf->create_participant(4,
+                              part_qos,
                               0,
-                              OpenDDS::DCPS::DEFAULT_STATUS_MASK);
+                              0);
 
     if (!participant) {
       ACE_ERROR_RETURN((LM_ERROR,
