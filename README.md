@@ -12,5 +12,5 @@
      - docker create --name=relay --rm -ti --net=pubnet -w /opt/OpenDDS/tools/rtpsrelay objectcomputing/opendds:relay ./RtpsRelay -DCPSConfigFile rtps.ini
      - docker network connect subnet relay
      - docker start relay
-     - docker run --name=publisher --rm -ti --net=pubnet -w /opt/OpenDDS/tests/DCPS/Messenger -e LD_LIBRARY_PATH=. objectcomputing/opendds:relay publisher -DCPSConfigFile relay_rtps.ini
+     - docker run --net=pubnet opendds-ckan python3 ./source/run.py public
      - docker run --net=subnet opendds-ckan
