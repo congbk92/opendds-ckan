@@ -15,4 +15,4 @@
      - docker run --net=subnet --rm -v "$PWD:$PWD" -w "$PWD" opendds-ckan python3 ./source/run.py run -t publisher -i template/Messenger.idl -n template/relay_rtps.ini
      - docker run --net=pubnet --rm -v "$PWD:$PWD" -w "$PWD" opendds-ckan python3 ./source/run.py run -t subscriber -i template/Messenger.idl -n template/relay_rtps.ini
  #### How to verify the idl file
-  - ocker run --net=pubnet --rm -v "$PWD:$PWD" -w "$PWD" opendds-ckan python3 {path_of__the_idl_file}
+  - docker run --net=pubnet --rm -v "$PWD:$PWD" -w "$PWD" opendds-ckan python3 ./source/run.py check -i {path_of__the_idl_file}
