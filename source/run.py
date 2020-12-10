@@ -36,10 +36,9 @@ def build(action, idl_path):
 
     if not os.path.isfile(idl_path):
         raise SystemExit(f"The idl file in {idl_path} isn't existed")
-
+    os.system(f"cp {idl_path} {build_path}/Messenger.idl")
     # 2. build
     os.chdir(build_path)
-    os.system(f"cp {idl_path} Messenger.idl")
     os.system("cmake .")
     os.system("cmake --build .")
     os.chdir(cwd)
@@ -87,21 +86,22 @@ def parse(argvs, short_opt, long_opt):
 
 USAGE = f'''Usage: 
                 python3 {sys.argv[0]} check [-i | --idl ] 
-                python3 {sys.argv[0]} build [-t | --type] [-i | --idl ]
-                python3 {sys.argv[0]} run   [-t | --type] [-n | --netConfig ]
+                python3 {sys.argv[0]} run   [-t | --type] [-i | --idl ] [-n | --netConfig ]
                 python3 {sys.argv[0]} publish_example'''
 
 def main():
     if (len(sys.argv) > 1):
         if sys.argv[1] == "check":
             idl_path = parse(sys.argv[2:], 'i:', ["idl="])[0]
-            is_valid_idl_file(idl_path)
-        elif sys.argv[1] == "build":
-            result = parse(sys.argv[2:], 't:i:', ["type=", "idl="])
-            build(result[0], result[1])
+            #To do: call api
+            if is_valid_idl_file(idl_path):
+                print("valid")
+            else:
+                print("invalid")
         elif sys.argv[1] == "run":
-            result = parse(sys.argv[2:], 't:n:', ["type=", "netConfig="])
-            run(result[0], result[1])
+            result = parse(sys.argv[2:], 't:i:n:', ["type=","idl=", "netConfig="])
+            build(result[0], result[1])
+            run(result[0], result[2])
         elif sys.argv[1] == "publish_example":
             publish_example()
         else:
