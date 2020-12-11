@@ -22,6 +22,12 @@
 
 #include "MessengerTypeSupportImpl.h"
 
+#ifdef _WIN32
+#include <Windows.h>
+#else
+#include <unistd.h>
+#endif
+
 
 int
 ACE_TMAIN(int argc, ACE_TCHAR *argv[])
@@ -140,7 +146,7 @@ ACE_TMAIN(int argc, ACE_TCHAR *argv[])
       }
 
       DDS::ConditionSeq conditions;
-      DDS::Duration_t timeout = { 60, 0 };
+      DDS::Duration_t timeout = { 6000, 0 };
       if (ws->wait(conditions, timeout) != DDS::RETCODE_OK) {
         ACE_ERROR_RETURN((LM_ERROR,
                           ACE_TEXT("ERROR: %N:%l: main() -")
@@ -160,7 +166,7 @@ ACE_TMAIN(int argc, ACE_TCHAR *argv[])
     message.text       = "Worst. Movie. Ever.";
     message.count      = 0;
 
-    for (int i = 0; i < 10; ++i) {
+    for (int i = 0; i < 100000; ++i) {
       DDS::ReturnCode_t error = message_writer->write(message, DDS::HANDLE_NIL);
       ++message.count;
       ++message.subject_id;
@@ -170,6 +176,7 @@ ACE_TMAIN(int argc, ACE_TCHAR *argv[])
                    ACE_TEXT("ERROR: %N:%l: main() -")
                    ACE_TEXT(" write returned %d!\n"), error));
       }
+      usleep(500000);
     }
 
     // Wait for samples to be acknowledged

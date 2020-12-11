@@ -15,6 +15,34 @@
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
 #include <iostream>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/msg.h>
+#include <cstring>
+#include <sys/resource.h>
+
+DataReaderListenerImpl::DataReaderListenerImpl(){
+/*  struct rlimit rlim;
+  rlim.rlim_cur = RLIM_INFINITY;
+  rlim.rlim_max = RLIM_INFINITY;
+
+  if (setrlimit(RLIMIT_MSGQUEUE, &rlim) == -1) {
+    perror( "setrlimit() failed");
+    exit( 1);
+  }*/
+
+  if ( -1 == ( msqid = msgget( (key_t)1234, IPC_CREAT | 0666)))
+  {
+    perror( "msgget() failed");
+    exit( 1);
+  }
+/*  if (-1 == msgctl(msqid, IPC_RMID, 0))
+  {
+    perror( "msgctl() failed");
+    exit( 1);
+  }*/
+}
 
 void
 DataReaderListenerImpl::on_requested_deadline_missed(
@@ -83,6 +111,7 @@ DataReaderListenerImpl::on_data_available(DDS::DataReader_ptr reader)
       val.Accept(writer);
       std::string json_str = buffer.GetString();
       std::cout<<json_str<<std::endl;
+      sendDataToQueue(json_str);
     }
 
   } else {
@@ -104,4 +133,17 @@ DataReaderListenerImpl::on_sample_lost(
   DDS::DataReader_ptr /*reader*/,
   const DDS::SampleLostStatus& /*status*/)
 {
+}
+
+void DataReaderListenerImpl::sendDataToQueue(std::string msg){
+  t_data   data;
+
+  sprintf( data.data_buff, "%s", msg.c_str());
+  data.data_length = strlen(data.data_buff);
+
+  if ( -1 == msgsnd( msqid, &data, sizeof(t_data), 0))
+  {
+    perror( "msgsnd() failed");
+    exit( 1);
+  }
 }

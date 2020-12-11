@@ -3,7 +3,23 @@ import pathlib
 import getopt
 import sys
 import subprocess
+import time
+import sysv_ipc
+import struct
+import threading
+import pymongo
+import json
 
+class DataStore:
+    def __init__(self):
+        self.table = pymongo.MongoClient("localhost", username='root', password='example', port=27017)
+        self.mydb = self.table["ckan_data"]
+        self.mycol = self.mydb["dds_data"]
+
+    def addDataToColumn(self, column_names, data):
+        #json_data = json.loads(json_str)
+        mydict = { column_names : data}
+        self.mycol.insert_one(mydict)
 
 def is_valid_idl_file(idl_path):
     if not os.path.isfile(idl_path):
@@ -16,14 +32,9 @@ def is_valid_idl_file(idl_path):
         return False
     return True
 
-def build(action, idl_path):
+def build(child_folder, idl_path):
     # 1. Prepare a temporary directory to build
     # make temp folder to build source in ${PWD}/build
-    if action == "publisher":
-        child_folder = "publisher"
-    else:
-        child_folder = "subscriber"
-
     cwd = os.getcwd()
     root_path = pathlib.Path(pathlib.Path(__file__).parent.absolute()).parent
     build_path = os.path.join(root_path, f".{child_folder}")
@@ -38,36 +49,57 @@ def build(action, idl_path):
         raise SystemExit(f"The idl file in {idl_path} isn't existed")
     os.system(f"cp {idl_path} {build_path}/Messenger.idl")
     # 2. build
-    os.chdir(build_path)
-    os.system("cmake .")
-    os.system("cmake --build .")
-    os.chdir(cwd)
+    os.system(f"cmake -S {build_path} -B {build_path}")
+    os.system(f"cmake --build {build_path}")
 
-def run(action, net_config_path):
-    if action == "publisher":
-        node_name = "publisher"
-    else:
-        node_name = "subscriber"
-
+def run(child_folder, net_config_path, inputfile = None):
     root_path = pathlib.Path(pathlib.Path(__file__).parent.absolute()).parent
-    build_path = os.path.join(root_path, f".{node_name}")
+    build_path = os.path.join(root_path, f".{child_folder}")
 
     rtps_file = "relay_rtps.ini"
     if not os.path.isfile(net_config_path):
         raise SystemExit(f"The config file in {net_config_path} isn't existed")
 
-    if not os.path.isfile(f"{build_path}/{node_name}"):
-        raise SystemExit(f"The execution file in {build_path}/{node_name} isn't existed. Please try to build it before!")
+    execution_file = "subscriber"
+    if child_folder != execution_file:
+        execution_file = "publisher"
 
-    os.system(f"{build_path}/{node_name} -DCPSConfigFile {net_config_path}")
+    if not os.path.isfile(f"{build_path}/{execution_file}"):
+        raise SystemExit(f"The execution file in {build_path}/{execution_file} isn't existed. Please try to build it before!")
+
+    #subprocess.Popen([f"{build_path}/{node_name}", "-DCPSConfigFile" ,f"{net_config_path}"],stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    #if action != "publisher":
+    #    recvData()
+    if type(inputfile) is str:
+        os.system(f"{build_path}/{execution_file} -DCPSConfigFile {net_config_path} {inputfile}")
+    else:
+        os.system(f"{build_path}/{execution_file} -DCPSConfigFile {net_config_path}")
+
+def recvData(dtStore):
+    try:
+        mq = sysv_ipc.MessageQueue(1234, sysv_ipc.IPC_CREAT, max_message_size = 2048)
+        while True:
+            try:
+                message = mq.receive()
+            except OSError:
+                print("ERROR")
+                continue
+            #print(message)
+            length = int(message[1])
+            #print(struct.unpack("<%ds" % length, message[0][0:length])[0].decode())
+            msg = message[0][0:length].decode()
+            json_data = json.loads(msg)
+            dtStore.addDataToColumn("data", json_data)
+    except sysv_ipc.ExistentialError:
+        print("ERROR: message queue creation failed")
 
 def publish_example():
     root_path = pathlib.Path(pathlib.Path(__file__).parent.absolute()).parent
-    template_path = os.path.join(root_path, "template")
-    idl_path = f"{template_path}/Messenger.idl"
-    net_config_path = f"{template_path}/relay_rtps.ini"
-    build("publisher", idl_path)
-    run("publisher", net_config_path)
+    example_path = os.path.join(root_path,"template", "example")
+    inputfile = os.path.join(root_path,".example/LifetimeDogLicenses.csv")
+    build("example", f'{example_path}/Messenger.idl')
+    run("example", f'{example_path}/rtps.ini', inputfile)
+
     
 def parse(argvs, short_opt, long_opt):
     options, arguments = getopt.getopt(
@@ -90,6 +122,8 @@ USAGE = f'''Usage:
                 python3 {sys.argv[0]} publish_example'''
 
 def main():
+    #print(byteorder)
+    #recvData()
     if (len(sys.argv) > 1):
         if sys.argv[1] == "check":
             idl_path = parse(sys.argv[2:], 'i:', ["idl="])[0]
@@ -100,8 +134,17 @@ def main():
                 print("invalid")
         elif sys.argv[1] == "run":
             result = parse(sys.argv[2:], 't:i:n:', ["type=","idl=", "netConfig="])
-            build(result[0], result[1])
-            run(result[0], result[2])
+            if is_valid_idl_file(result[1]):
+                dtStore = DataStore()
+                dtStore.addDataToColumn("Topic", "LifetimeDogLicenses")
+                dtStore.addDataToColumn("idl", open(result[1]).read())
+                dtStore.addDataToColumn("netConfig", open(result[2]).read())
+                build(result[0], result[1])
+                x = threading.Thread(target=recvData, args=[dtStore], daemon=True)
+                x.start()
+                run(result[0], result[2])
+            else:
+                raise SystemExit(f"The id file in {result[1]} is invalid. Please check")
         elif sys.argv[1] == "publish_example":
             publish_example()
         else:

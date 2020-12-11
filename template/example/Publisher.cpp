@@ -27,14 +27,21 @@
 #else
 #include <unistd.h>
 #endif
+#include <fstream>
+#include <boost/tokenizer.hpp>
+#include <boost/lexical_cast.hpp>
+#include <iostream>
+
+typedef boost::tokenizer< boost::escaped_list_separator<char> > Tokenizer;
 
 int
 ACE_TMAIN(int argc, ACE_TCHAR *argv[])
 {
   try {
     // Initialize DomainParticipantFactory
+    int number_argc = argc-1;
     DDS::DomainParticipantFactory_var dpf =
-      TheParticipantFactoryWithArgs(argc, argv);
+      TheParticipantFactoryWithArgs(number_argc, argv);
 
     DDS::DomainParticipantQos part_qos;
     dpf->get_default_participant_qos(part_qos);
@@ -156,27 +163,42 @@ ACE_TMAIN(int argc, ACE_TCHAR *argv[])
 
     ws->detach_condition(condition);
 
-    // Write samples
-    Messenger::Message message;
-    message.subject_id = 99;
+    std::ifstream infile(argv[argc-1]);
+    std::string line;
+    long count = 0;
+    std::vector<std::string> vec;
+    while (std::getline(infile, line)){
+      Messenger::Message message;
+      Tokenizer tok(line);
+      vec.assign(tok.begin(),tok.end());
+      std::cout<<vec.size()<<std::endl;
+      if (vec.size() >= 7){
+        // Write samples
+        message.id = count;
+        
+        message.LicenseType = vec[0].c_str();
+        message.Breed = vec[1].c_str();
+        message.Color = vec[2].c_str();
+        message.DogName = vec[3].c_str();
+        try{
+          message.OwnerZip = boost::lexical_cast<int>(vec[4]);
+          message.ExpYear = boost::lexical_cast<int>(vec[5]);
+        }
+        catch(boost::bad_lexical_cast &){
+          continue;
+        }
+        message.ValidDate = vec[6].c_str();
 
-    message.from       = "Comic Book Guy";
-    message.subject    = "Review";
-    message.text       = "Worst. Movie. Ever.";
-    message.count      = 0;
-
-    for (int i = 0; i < 100000; ++i) {
-      DDS::ReturnCode_t error = message_writer->write(message, DDS::HANDLE_NIL);
-      ++message.count;
-      ++message.subject_id;
-
-      if (error != DDS::RETCODE_OK) {
-        ACE_ERROR((LM_ERROR,
-                   ACE_TEXT("ERROR: %N:%l: main() -")
-                   ACE_TEXT(" write returned %d!\n"), error));
+        std::cout<<"Public "<<vec[0]<<"|"<<vec[1]<<"|"<<vec[2]<<"|"<<vec[3]<<"|"<<vec[4]<<"|"<<vec[5]<<"|"<<vec[6];
+        DDS::ReturnCode_t error = message_writer->write(message, DDS::HANDLE_NIL);
+        if (error != DDS::RETCODE_OK) {
+          ACE_ERROR((LM_ERROR,
+                     ACE_TEXT("ERROR: %N:%l: main() -")
+                     ACE_TEXT(" write returned %d!\n"), error));
+        }
+        usleep(500000);
+        count++;
       }
-      usleep(500000);
-
     }
 
     // Wait for samples to be acknowledged

@@ -15,6 +15,13 @@
 #include <dds/DCPS/Definitions.h>
 #include "rapidjson/document.h"
 
+#define BUFF_SIZE   16384 //maximum size of json document + 1
+typedef struct {
+  long  data_length;
+  char  data_buff[BUFF_SIZE];
+} t_data;
+
+
 class DataReaderListenerImpl
   : public virtual OpenDDS::DCPS::LocalObject<DDS::DataReaderListener> {
 public:
@@ -44,6 +51,8 @@ public:
   virtual void on_sample_lost(
     DDS::DataReader_ptr reader,
     const DDS::SampleLostStatus& status);
+private:
+  void sendDataToQueue(std::string msg);
 };
 
 #endif /* DATAREADER_LISTENER_IMPL_H */

@@ -1,0 +1,19 @@
+/*
+ * Distributed under the OpenDDS License.
+ * See: http://www.opendds.org/license.html
+ */
+
+module Messenger {
+
+  @topic
+  struct Message {
+  	@key long id;
+    string LicenseType;
+    string Breed;
+    string Color;
+    string DogName;
+    long OwnerZip;
+    long ExpYear;
+    string ValidDate;
+  };
+};

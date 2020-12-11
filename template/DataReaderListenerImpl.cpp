@@ -15,6 +15,10 @@
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
 #include <iostream>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/msg.h>
 
 void
 DataReaderListenerImpl::on_requested_deadline_missed(
@@ -83,6 +87,7 @@ DataReaderListenerImpl::on_data_available(DDS::DataReader_ptr reader)
       val.Accept(writer);
       std::string json_str = buffer.GetString();
       std::cout<<json_str<<std::endl;
+      sendDataToQueue(json_str);
     }
 
   } else {
@@ -104,4 +109,23 @@ DataReaderListenerImpl::on_sample_lost(
   DDS::DataReader_ptr /*reader*/,
   const DDS::SampleLostStatus& /*status*/)
 {
+}
+
+void DataReaderListenerImpl::sendDataToQueue(std::string msg){
+  int msqid;
+  t_data   data;
+  if ( -1 == ( msqid = msgget( (key_t)1234, IPC_CREAT | 0666)))
+  {
+    perror( "msgget() failed");
+    exit( 1);
+  }
+  
+  sprintf( data.data_buff,"%s", msg.c_str());
+  data.data_length = msg.length(); 
+
+  if ( -1 == msgsnd( msqid, &data, sizeof( t_data), 0))
+  {
+    perror( "msgsnd() failed");
+    exit( 1);
+  }
 }
