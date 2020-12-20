@@ -3,7 +3,6 @@ cmake_minimum_required(VERSION 3.8.2)
 
 find_package(OpenDDS REQUIRED)
 find_package(RapidJSON REQUIRED)
-find_package(Boost REQUIRED)
 
 set(CMAKE_CXX_COMPILER ${OPENDDS_COMPILER})
 

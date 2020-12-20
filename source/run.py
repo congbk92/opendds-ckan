@@ -37,8 +37,14 @@ def build(child_folder, idl_path):
     # make temp folder to build source in ${PWD}/build
     cwd = os.getcwd()
     root_path = pathlib.Path(pathlib.Path(__file__).parent.absolute()).parent
-    build_path = os.path.join(root_path, f".{child_folder}")
+    build_path = os.path.join(root_path, f"__{child_folder}")
     template_path = os.path.join(root_path, "template",child_folder)
+
+    print("^^^^^^^^^^^^^^^^^^^^^^^")
+    print(f"root_path: {root_path}")
+    print(f"build_path: {build_path}")
+    print(f"template_path: {template_path}")
+    print("^^^^^^^^^^^^^^^^^^^^^^^")
 
     if os.path.isdir(build_path):
         os.system(f"rm -rf {build_path}")
@@ -54,7 +60,7 @@ def build(child_folder, idl_path):
 
 def run(child_folder, net_config_path, inputfile = None):
     root_path = pathlib.Path(pathlib.Path(__file__).parent.absolute()).parent
-    build_path = os.path.join(root_path, f".{child_folder}")
+    build_path = os.path.join(root_path, f"__{child_folder}")
 
     rtps_file = "relay_rtps.ini"
     if not os.path.isfile(net_config_path):

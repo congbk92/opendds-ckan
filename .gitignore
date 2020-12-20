@@ -1,4 +1,4 @@
 /build
-/.subscriber
-/.publisher
-/.example
+/__subscriber
+/__publisher
+/__example
