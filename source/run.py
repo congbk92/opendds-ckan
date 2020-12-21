@@ -7,19 +7,9 @@ import time
 import sysv_ipc
 import struct
 import threading
-import pymongo
 import json
-
-class DataStore:
-    def __init__(self):
-        self.table = pymongo.MongoClient("localhost", username='root', password='example', port=27017)
-        self.mydb = self.table["ckan_data"]
-        self.mycol = self.mydb["dds_data"]
-
-    def addDataToColumn(self, column_names, data):
-        #json_data = json.loads(json_str)
-        mydict = { column_names : data}
-        self.mycol.insert_one(mydict)
+from CKANConnector import CKANConnector
+from DataStore import DataStore
 
 def is_valid_idl_file(idl_path):
     if not os.path.isfile(idl_path):
@@ -81,7 +71,7 @@ def run(child_folder, net_config_path, inputfile = None):
     else:
         os.system(f"{build_path}/{execution_file} -DCPSConfigFile {net_config_path}")
 
-def recvData(dtStore):
+def recvData(dtStore, ckan):
     try:
         mq = sysv_ipc.MessageQueue(1234, sysv_ipc.IPC_CREAT, max_message_size = 2048)
         while True:
@@ -96,6 +86,7 @@ def recvData(dtStore):
             msg = message[0][0:length].decode()
             json_data = json.loads(msg)
             dtStore.addDataToColumn("data", json_data)
+            ckan.UpdateDataStore(json_data)
     except sysv_ipc.ExistentialError:
         print("ERROR: message queue creation failed")
 
@@ -146,7 +137,10 @@ def main():
                 dtStore.addDataToColumn("idl", open(result[1]).read())
                 dtStore.addDataToColumn("netConfig", open(result[2]).read())
                 build(result[0], result[1])
-                x = threading.Thread(target=recvData, args=[dtStore], daemon=True)
+                #ckan = CKANConnector("http://localhost:5000", "b3c5e73a-52ef-4156-96eb-ef022746ea74", package_id="f4b61669-67d7-48c4-b114-79170f37cb5f")
+                ckan = CKANConnector("http://localhost:5000", "b3c5e73a-52ef-4156-96eb-ef022746ea74", 
+                    "4abbe0d0-a9ce-44ff-8ff9-d1af01078ab7")
+                x = threading.Thread(target=recvData, args=[dtStore,ckan], daemon=True)
                 x.start()
                 run(result[0], result[2])
             else:
