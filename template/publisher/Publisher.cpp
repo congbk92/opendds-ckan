@@ -27,15 +27,17 @@
 #else
 #include <unistd.h>
 #endif
-
+#include <iostream>
 
 int
 ACE_TMAIN(int argc, ACE_TCHAR *argv[])
 {
   try {
     // Initialize DomainParticipantFactory
+    std::string topic_name = argv[argc-1];
+    int number_argc = argc-1;
     DDS::DomainParticipantFactory_var dpf =
-      TheParticipantFactoryWithArgs(argc, argv);
+      TheParticipantFactoryWithArgs(number_argc, argv);
 
     DDS::DomainParticipantQos part_qos;
     dpf->get_default_participant_qos(part_qos);
@@ -75,7 +77,7 @@ ACE_TMAIN(int argc, ACE_TCHAR *argv[])
     // Create Topic (Movie Discussion List)
     CORBA::String_var type_name = ts->get_type_name();
     DDS::Topic_var topic =
-      participant->create_topic("Movie Discussion List",
+      participant->create_topic(topic_name.c_str(),
                                 type_name,
                                 TOPIC_QOS_DEFAULT,
                                 0,
