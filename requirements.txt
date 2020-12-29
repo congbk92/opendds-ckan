@@ -1,3 +1,4 @@
 sysv_ipc
 pymongo
 cmake
+ckanapi

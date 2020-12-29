@@ -16,6 +16,7 @@ class DDSConnector:
         self.idl_path = idl_path
         self.net_config_path = net_config_path
         self.mode = mode
+        self.workspace = None
 
         if idl_path and net_config_path and topic_name:
             root_path = pathlib.Path(pathlib.Path(__file__).parent.absolute()).parent
@@ -37,19 +38,19 @@ class DDSConnector:
             os.system(f"cp {self.net_config_path} {net_config_new_path}")
             self.net_config_path = net_config_new_path
 
-    def isIDLValid(self):
+    def IsIDLValid(self):
         if not os.path.isfile(self.idl_path):
-            raise SystemExit(f"The idl file in {idl_path} isn't existed")
+            raise SystemExit(f"The idl file in {self.idl_path} isn't existed")
         #Add command
         try:
-            subprocess.check_output(f"opendds_idl --syntax-only {idl_path}", shell=True)
+            subprocess.check_output(f"opendds_idl --syntax-only {self.idl_path}", shell=True)
         except subprocess.CalledProcessError:
             return False
         return True
 
-    # def __del__(self): 
-    #     if os.path.isdir(self.workspace):
-    #         os.system(f"rm -rf {self.workspace}")
+    def __del__(self): 
+        if self.workspace and os.path.isdir(self.workspace):
+            os.system(f"rm -rf {self.workspace}")
 
 
     def Build(self):
@@ -90,25 +91,6 @@ class DDSConnector:
             print(f"{self.workspace}/{execution_file} -DCPSConfigFile {self.net_config_path} {self.topic_name}")
             os.system(f"{self.workspace}/{execution_file} -DCPSConfigFile {self.net_config_path} {self.topic_name}")
 
-    # def ReceiveStreamData(self, dtStore, ckan):
-    #     try:
-    #         mq = sysv_ipc.MessageQueue(1234, sysv_ipc.IPC_CREAT, max_message_size = 2048)
-    #         while True:
-    #             try:
-    #                 message = mq.receive()
-    #             except OSError:
-    #                 print("ERROR")
-    #                 continue
-    #             #print(message)
-    #             length = int(message[1])
-    #             #print(struct.unpack("<%ds" % length, message[0][0:length])[0].decode())
-    #             msg = message[0][0:length].decode()
-    #             json_data = json.loads(msg)
-    #             dtStore.addDataToColumn("data", json_data)
-    #             ckan.UpdateDataStore(json_data)
-    #     except sysv_ipc.ExistentialError:
-    #         print("ERROR: message queue creation failed")
-
     def PublishExample(self):
         root_path = pathlib.Path(pathlib.Path(__file__).parent.absolute()).parent
         example_path = os.path.join(root_path,"template", "example")
@@ -117,7 +99,7 @@ class DDSConnector:
         self.Build()
         self.Run(inputfile)
 
-if __name__ == '__main__':
-    tmp1 = DDSConnector("template/Messenger.idl", "ThisIsTopic", "template/rtps.ini", "publisher")
-    tmp1.Build()
-    tmp1.Run()
+# if __name__ == '__main__':
+#     tmp1 = DDSConnector("template/Messenger.idl", "ThisIsTopic", "template/rtps.ini", "publisher")
+#     tmp1.Build()
+#     tmp1.Run()
