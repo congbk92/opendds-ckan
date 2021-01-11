@@ -37,6 +37,17 @@ class DDSConnector:
             net_config_new_path = os.path.join(self.workspace, "rtps.ini")
             os.system(f"cp {self.net_config_path} {net_config_new_path}")
             self.net_config_path = net_config_new_path
+        else: #Default Example
+            root_path = pathlib.Path(pathlib.Path(__file__).parent.absolute()).parent
+            self.topic_name = "Movie Discussion List"
+            self.workspace = os.path.join(root_path, f'__{uuid.uuid4().hex}')
+            if os.path.isdir(self.workspace):
+                os.system(f"rm -rf {self.workspace}")
+            os.system(f"mkdir {self.workspace}")
+            
+            self.net_config_path  = os.path.join(self.workspace, "rtps.ini")
+            self.idl_path = os.path.join(self.workspace, "Messenger.idl")
+            self.mode = "example"
 
     def IsIDLValid(self):
         if not os.path.isfile(self.idl_path):
@@ -94,7 +105,9 @@ class DDSConnector:
     def PublishExample(self):
         root_path = pathlib.Path(pathlib.Path(__file__).parent.absolute()).parent
         example_path = os.path.join(root_path,"template", "example")
-        inputfile = os.path.join(root_path,".example/LifetimeDogLicenses.csv")
+        print(example_path)
+        inputfile = os.path.join(root_path,"template/example/LifetimeDogLicenses.csv")
+        print(inputfile)
         self.mode ="example" 
         self.Build()
         self.Run(inputfile)

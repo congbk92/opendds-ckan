@@ -50,7 +50,7 @@ def parse(argvs, short_opt, long_opt):
 USAGE = f'''Usage: 
                 python3 {sys.argv[0]} check [-i | --idl ] 
                 python3 {sys.argv[0]} run   [-c | --config]
-                python3 {sys.argv[0]} publish_dds_example'''
+                python3 {sys.argv[0]} publish_example'''
 
 
 
