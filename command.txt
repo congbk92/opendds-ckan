@@ -1,0 +1,9 @@
+active env:
+. /usr/lib/ckan/default/bin/activate
+
+cd /usr/lib/ckan/default/src/ckanext-iauthfunctions
+python setup.py develop
+
+ckan -c /etc/ckan/default/ckan.ini run
+
+ckan -c /etc/ckan/default/ckan.ini jobs worker
